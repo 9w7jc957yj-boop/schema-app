@@ -1,0 +1,159 @@
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 20px;
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  border-bottom: 1px solid var(--separator);
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
+
+.toolbar__group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.toolbar__group--center {
+  flex: 1;
+  justify-content: center;
+}
+.toolbar__group--end {
+  margin-left: auto;
+}
+
+.tb-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 14px;
+  border: none;
+  border-radius: 999px;
+  background: var(--ios-gray6);
+  color: var(--label);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.08s ease;
+  white-space: nowrap;
+}
+.tb-btn:hover {
+  background: var(--ios-gray5);
+}
+.tb-btn:active {
+  transform: scale(0.96);
+}
+.tb-btn__icon {
+  font-size: 13px;
+  opacity: 0.6;
+}
+
+.tb-btn--primary {
+  background: var(--ios-blue);
+  color: #fff;
+}
+.tb-btn--primary:hover {
+  background: #0a6ce0;
+}
+
+.tb-btn--accent {
+  background: var(--ios-green);
+  color: #fff;
+}
+.tb-btn--accent:hover {
+  background: #2db14e;
+}
+
+.tb-btn--magic {
+  background: linear-gradient(135deg, #af52de, #5e5ce6);
+  color: #fff;
+  font-weight: 600;
+}
+.tb-btn--magic:hover {
+  background: linear-gradient(135deg, #9b46c4, #4f4dd0);
+}
+
+.tb-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.tb-btn:disabled:hover {
+  background: var(--ios-gray6);
+}
+
+/* ---------- Segmentväxel: Grundschema / Liveschema ---------- */
+.mode-switch {
+  position: relative;
+  display: inline-flex;
+  padding: 3px;
+  border-radius: 999px;
+  background: var(--ios-gray5);
+  width: 300px;
+  box-shadow: inset 0 0 0 0.5px rgba(0, 0, 0, 0.04);
+}
+
+.mode-switch__thumb {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: calc(50% - 3px);
+  height: calc(100% - 6px);
+  border-radius: 999px;
+  box-shadow: var(--shadow-sm), 0 0 0 0.5px rgba(0, 0, 0, 0.04);
+  transition: transform 0.28s cubic-bezier(0.32, 0.72, 0, 1), background 0.28s ease;
+}
+.mode-switch__thumb[data-mode='grundschema'] {
+  transform: translateX(0);
+  background: var(--ios-blue);
+}
+.mode-switch__thumb[data-mode='liveschema'] {
+  transform: translateX(100%);
+  background: var(--ios-orange);
+}
+
+.mode-switch__option {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  height: 30px;
+  border: none;
+  background: transparent;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--label-secondary);
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+.mode-switch__option.is-active {
+  color: #fff;
+}
+
+/* ---------- Liten vy-växel: Vecka / Månad (endast grundschema) ---------- */
+.view-switch {
+  display: inline-flex;
+  padding: 2px;
+  border-radius: 999px;
+  background: var(--ios-gray5);
+}
+.view-switch__option {
+  height: 26px;
+  padding: 0 14px;
+  border: none;
+  background: transparent;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--label-secondary);
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+.view-switch__option.is-active {
+  background: #fff;
+  color: var(--label);
+  box-shadow: var(--shadow-sm), 0 0 0 0.5px rgba(0, 0, 0, 0.04);
+}

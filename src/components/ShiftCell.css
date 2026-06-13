@@ -1,0 +1,34 @@
+.cell {
+  border-right: 1px solid var(--separator);
+  border-bottom: 1px solid var(--separator);
+  padding: 6px;
+  min-height: 60px;
+  vertical-align: top;
+  transition: background 0.12s ease, box-shadow 0.12s ease;
+}
+
+.cell--weekend {
+  background: var(--weekend-tint);
+}
+
+.cell--over {
+  background: rgba(0, 122, 255, 0.1);
+  box-shadow: inset 0 0 0 2px var(--ios-blue);
+  border-radius: var(--radius-sm);
+}
+
+/* Cell som avviker från grundschemat (liveläge): orange accentstreck till vänster. */
+.cell--deviation {
+  box-shadow: inset 3px 0 0 var(--ios-orange);
+  background: rgba(255, 149, 0, 0.06);
+}
+.cell--deviation.cell--weekend {
+  background: rgba(255, 149, 0, 0.09);
+}
+
+.cell__stack {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  height: 100%;
+}

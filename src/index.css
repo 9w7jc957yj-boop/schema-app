@@ -1,0 +1,83 @@
+/* ============================================================
+   iOS / Cupertino-inspirerad bas. Systemfärger, mjuka skuggor,
+   rundade hörn och SF-liknande typografi.
+   ============================================================ */
+
+:root {
+  /* iOS systemfärger (light) */
+  --ios-blue: #007aff;
+  --ios-green: #34c759;
+  --ios-red: #ff3b30;
+  --ios-orange: #ff9500;
+  --ios-gray: #8e8e93;
+  --ios-gray2: #aeaeb2;
+  --ios-gray4: #d1d1d6;
+  --ios-gray5: #e5e5ea;
+  --ios-gray6: #f2f2f7;
+
+  /* Ytor */
+  --bg-app: #f2f2f7;
+  --bg-elevated: #ffffff;
+  --bg-grouped: #ffffff;
+  --separator: rgba(60, 60, 67, 0.18);
+  --separator-strong: rgba(60, 60, 67, 0.29);
+
+  /* Text */
+  --label: #1c1c1e;
+  --label-secondary: rgba(60, 60, 67, 0.6);
+  --label-tertiary: rgba(60, 60, 67, 0.4);
+
+  /* Helg-ton */
+  --weekend-tint: rgba(255, 59, 48, 0.06);
+  --weekend-tint-strong: rgba(255, 59, 48, 0.1);
+
+  /* Radier & skuggor */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.1);
+
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display',
+    'Helvetica Neue', 'Inter', system-ui, sans-serif;
+  color: var(--label);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+
+body {
+  background: var(--bg-app);
+  color: var(--label);
+}
+
+button {
+  font-family: inherit;
+}
+
+::-webkit-scrollbar {
+  height: 10px;
+  width: 10px;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--ios-gray4);
+  border-radius: 8px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--ios-gray2);
+  background-clip: content-box;
+}

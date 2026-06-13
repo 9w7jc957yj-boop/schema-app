@@ -1,0 +1,238 @@
+.grid-scroll {
+  margin: 16px 20px 24px;
+  background: var(--bg-elevated);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  overflow: auto;
+  max-height: calc(100vh - 320px);
+}
+
+.grid-table {
+  border-collapse: separate;
+  border-spacing: 0;
+  width: 100%;
+  min-width: 920px;
+}
+
+/* ---------- Header ---------- */
+.grid-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  background: rgba(255, 255, 255, 0.86);
+  backdrop-filter: saturate(180%) blur(12px);
+  -webkit-backdrop-filter: saturate(180%) blur(12px);
+  border-bottom: 1px solid var(--separator-strong);
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--label-secondary);
+  padding: 10px 8px;
+}
+
+.grid-dayhead {
+  text-align: center;
+  min-width: 118px;
+  position: relative;
+}
+.grid-dayhead.is-clickable {
+  cursor: pointer;
+}
+.grid-dayhead.is-clickable:hover {
+  background: var(--cal-accent-soft, rgba(0, 122, 255, 0.08));
+}
+.grid-dayhead__more {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ios-orange);
+  opacity: 0;
+  transition: opacity 0.12s ease;
+}
+.grid-dayhead.is-clickable:hover .grid-dayhead__more {
+  opacity: 1;
+}
+
+/* ---------- Månadsvy: kompaktare kolumner + veckoavgränsare ---------- */
+.grid-table--manad {
+  min-width: auto;
+}
+.grid-table--manad .grid-dayhead {
+  min-width: 58px;
+  padding: 8px 4px;
+}
+.grid-table--manad .grid-dayhead__weekday {
+  font-size: 12px;
+}
+.grid-table--manad .grid-dayhead__date {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--label-secondary);
+}
+.grid-table--manad .cell {
+  padding: 4px;
+  min-width: 58px;
+}
+.grid-table--manad .shift-block--cell {
+  min-height: 36px;
+  padding: 4px;
+}
+.grid-table--manad .shift-block__time {
+  font-size: 11.5px;
+}
+/* Tydlig linje vid varje måndag så veckorna går att urskilja. */
+.grid-table--manad .grid-dayhead.is-weekstart,
+.grid-table--manad .cell--weekstart {
+  border-left: 2px solid var(--separator-strong);
+}
+.grid-dayhead__weekday {
+  display: block;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--label);
+}
+.grid-dayhead__date {
+  display: block;
+  font-size: 11px;
+  color: var(--label-tertiary);
+  margin-top: 1px;
+}
+
+/* Hörnceller och vänsterkolumn fästs både vänster och topp */
+.grid-corner {
+  left: 0;
+  z-index: 6 !important;
+  text-align: left;
+  min-width: 200px;
+  width: 200px;
+  background: #ffffff;
+  border-right: 1px solid var(--separator-strong);
+}
+.grid-table thead .grid-corner {
+  position: sticky;
+}
+.grid-totalhead {
+  right: 0;
+  position: sticky;
+  text-align: center;
+  min-width: 132px;
+  background: #ffffff;
+  border-left: 1px solid var(--separator-strong);
+}
+
+/* ---------- Medarbetarkolumn (sticky vänster) ---------- */
+.emp-cell {
+  position: sticky;
+  left: 0;
+  z-index: 3;
+  background: var(--bg-elevated);
+  text-align: left;
+  padding: 8px 12px;
+  border-right: 1px solid var(--separator-strong);
+  border-bottom: 1px solid var(--separator);
+  min-width: 200px;
+  width: 200px;
+}
+.emp-cell__name {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--label);
+  letter-spacing: -0.01em;
+}
+.emp-cell__meta {
+  font-size: 12px;
+  color: var(--label-secondary);
+  margin-top: 1px;
+}
+
+.emp-row:hover .emp-cell {
+  background: var(--ios-gray6);
+}
+.emp-row:hover .cell:not(.cell--weekend) {
+  background: rgba(0, 0, 0, 0.015);
+}
+
+/* ---------- Veckototal (höger) ---------- */
+.total-cell {
+  position: sticky;
+  right: 0;
+  z-index: 2;
+  background: var(--bg-elevated);
+  border-left: 1px solid var(--separator-strong);
+  border-bottom: 1px solid var(--separator);
+  text-align: center;
+  padding: 8px 10px;
+  min-width: 132px;
+}
+.total-cell__value {
+  font-size: 14px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--label);
+}
+.total-cell__sep {
+  color: var(--label-tertiary);
+  font-weight: 400;
+}
+.total-cell__diff {
+  font-size: 11px;
+  font-weight: 600;
+  margin-top: 2px;
+  font-variant-numeric: tabular-nums;
+}
+.total-cell.is-over {
+  background: #e7f8ec;
+}
+.total-cell.is-over .total-cell__diff {
+  color: var(--ios-green);
+}
+.total-cell.is-under {
+  background: #fdeceb;
+}
+.total-cell.is-under .total-cell__diff {
+  color: var(--ios-red);
+}
+.total-cell.is-neutral .total-cell__diff {
+  color: var(--label-secondary);
+}
+
+/* ---------- Totalrad (tfoot) ---------- */
+.totals-row th,
+.totals-row td {
+  position: sticky;
+  bottom: 0;
+  z-index: 4;
+  background: rgba(248, 248, 250, 0.94);
+  backdrop-filter: saturate(180%) blur(12px);
+  -webkit-backdrop-filter: saturate(180%) blur(12px);
+  border-top: 1px solid var(--separator-strong);
+  font-variant-numeric: tabular-nums;
+}
+.totals-row__label {
+  left: 0;
+  z-index: 5 !important;
+  text-align: left;
+  padding: 12px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--label);
+  border-right: 1px solid var(--separator-strong);
+}
+.totals-row__cell {
+  text-align: center;
+  padding: 12px 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--label);
+}
+.totals-row__grand {
+  right: 0;
+  z-index: 5 !important;
+  text-align: center;
+  padding: 12px 10px;
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--ios-blue);
+  border-left: 1px solid var(--separator-strong);
+}
