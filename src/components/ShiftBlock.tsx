@@ -1,5 +1,5 @@
 import type { ShiftTemplate } from '../types'
-import { displaySegments, shiftDurationMinutes, formatMinutesAsHHMM } from '../utils/time'
+import { shiftDurationMinutes, formatMinutesAsHHMM } from '../utils/time'
 import { readableTextColor } from '../utils/color'
 import { writeDragPayload } from '../utils/dnd'
 import './ShiftBlock.css'
@@ -14,13 +14,15 @@ interface ShiftBlockProps {
 }
 
 /**
- * En färgad pass-ruta. I paletten visas etiketten; i en cell visas
- * tiden på två rader. Pass som korsar midnatt ritas tvådelat.
+ * En pass-ruta. I paletten visas etiketten på en färgad ruta (drag-källa).
+ * I en cell visas passet som ett ljust chip med passfärgen som vänsterkant,
+ * tid och passnamn – i samma stil som brukarschemats insats-chips.
  */
 export default function ShiftBlock({ template, variant, shiftId, onRemove }: ShiftBlockProps) {
-  const textColor = readableTextColor(template.color)
-  const segments = displaySegments(template)
+  const isCell = variant === 'cell'
   const durationLabel = formatMinutesAsHHMM(shiftDurationMinutes(template))
+  // Etiketter som redan är en tid (t.ex. "06:00–14:45") visas inte dubbelt.
+  const labelIsTime = /^\d/.test(template.label)
 
   const handleDragStart = (e: React.DragEvent) => {
     if (variant === 'palette') {
@@ -31,7 +33,7 @@ export default function ShiftBlock({ template, variant, shiftId, onRemove }: Shi
   }
 
   const handleContextMenu = (e: React.MouseEvent) => {
-    if (variant === 'cell' && onRemove) {
+    if (isCell && onRemove) {
       e.preventDefault()
       onRemove()
     }
@@ -39,12 +41,16 @@ export default function ShiftBlock({ template, variant, shiftId, onRemove }: Shi
 
   return (
     <div
-      className={`shift-block shift-block--${variant} ${template.crossesMidnight ? 'is-split' : ''}`}
-      style={{ background: template.color, color: textColor }}
+      className={`shift-block shift-block--${variant}`}
+      style={
+        isCell
+          ? { borderLeftColor: template.color }
+          : { background: template.color, color: readableTextColor(template.color) }
+      }
       draggable
       onDragStart={handleDragStart}
       onContextMenu={handleContextMenu}
-      title={`${template.label} · ${durationLabel}`}
+      title={`${template.label} · ${template.startTime}–${template.endTime} · ${durationLabel}`}
     >
       {variant === 'palette' ? (
         <div className="shift-block__palette-body">
@@ -53,25 +59,15 @@ export default function ShiftBlock({ template, variant, shiftId, onRemove }: Shi
         </div>
       ) : (
         <div className="shift-block__cell-body">
-          {template.crossesMidnight ? (
-            <div className="shift-block__segments">
-              {segments.map((seg, i) => (
-                <div className="shift-block__segment" key={i}>
-                  <span>{seg.start}</span>
-                  <span>{seg.end}</span>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="shift-block__time">
-              <span>{template.startTime}</span>
-              <span>{template.endTime}</span>
-            </div>
-          )}
+          <div className="shift-block__chip-time">
+            {template.startTime}–{template.endTime}
+            {template.crossesMidnight && <span className="shift-block__nextday">+1</span>}
+          </div>
+          {!labelIsTime && <div className="shift-block__chip-label">{template.label}</div>}
         </div>
       )}
 
-      {variant === 'cell' && onRemove && (
+      {isCell && onRemove && (
         <button
           className="shift-block__remove"
           type="button"

@@ -40,13 +40,14 @@
   opacity: 0.85;
 }
 
-/* ---------- Cell-variant ---------- */
+/* ---------- Cell-variant (chip-stil, som brukarschemat) ---------- */
 .shift-block--cell {
-  padding: 5px 6px;
-  min-height: 42px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  background: #fff;
+  border: 1px solid var(--separator);
+  border-left: 3px solid var(--ios-gray);
+  border-radius: 7px;
+  padding: 4px 7px;
+  color: var(--label);
 }
 .shift-block--cell:hover {
   box-shadow: var(--shadow-md);
@@ -54,30 +55,31 @@
 .shift-block__cell-body {
   width: 100%;
 }
-.shift-block__time {
+.shift-block__chip-time {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  line-height: 1.2;
-  font-variant-numeric: tabular-nums;
-  font-size: 13px;
-  font-weight: 600;
-}
-.shift-block__segments {
-  display: flex;
-  flex-direction: column;
   gap: 3px;
-}
-.shift-block__segment {
-  display: flex;
-  justify-content: space-between;
-  gap: 8px;
   font-variant-numeric: tabular-nums;
-  font-size: 11.5px;
-  font-weight: 600;
-  padding: 1px 4px;
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--label);
+  line-height: 1.2;
+}
+.shift-block__nextday {
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--label-secondary);
+  background: var(--ios-gray6);
   border-radius: 4px;
-  background: rgba(255, 255, 255, 0.18);
+  padding: 0 3px;
+  line-height: 1.4;
+}
+.shift-block__chip-label {
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--label-secondary);
+  line-height: 1.2;
+  margin-top: 1px;
 }
 
 /* Borttagningsknapp (✕) syns vid hover */
