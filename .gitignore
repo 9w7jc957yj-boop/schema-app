@@ -9,3 +9,6 @@ dist-ssr
 # Lokala verktygskonfigurationer
 .claude/
 .vercel
+
+# TypeScript inkrementell build-info
+*.tsbuildinfo

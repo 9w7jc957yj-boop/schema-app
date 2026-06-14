@@ -14,17 +14,8 @@ import { suggestPeriodShifts } from '../utils/autofill'
 import Toolbar from './Toolbar'
 import ShiftPalette from './ShiftPalette'
 import ScheduleGrid from './ScheduleGrid'
-import CalendarView from './CalendarView'
 import DayDrawer from './DayDrawer'
-import VariantSwitcher, { type LayoutVariant } from './VariantSwitcher'
 import './SchedulePage.css'
-
-const VARIANT_KEY = 'schema-app:variant'
-
-function todayISO(): string {
-  const d = new Date()
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
-}
 
 /** Toppnivåvy som äger schemats tillstånd och kopplar ihop delarna. */
 export default function SchedulePage() {
@@ -67,24 +58,6 @@ export default function SchedulePage() {
   const [mode, setMode] = useState<ScheduleMode>('liveschema')
   // Vy för grundschemat (vecka/månad). Liveschemat visas alltid per vecka.
   const [grundView, setGrundView] = useState<GridView>('manad')
-
-  // Vald layoutvariant (matris eller kalender), sparas mellan sessioner.
-  const [variant, setVariant] = useState<LayoutVariant>(() => {
-    try {
-      return (localStorage.getItem(VARIANT_KEY) as LayoutVariant) || 'kort'
-    } catch {
-      return 'kort'
-    }
-  })
-  useEffect(() => {
-    try {
-      localStorage.setItem(VARIANT_KEY, variant)
-    } catch {
-      // ignorera
-    }
-  }, [variant])
-
-  const today = useMemo(() => todayISO(), [])
 
   // Dagdrawer: vald dag (endast i liveschemat) som visar dagens insatser.
   const [drawerDate, setDrawerDate] = useState<string | null>(null)
@@ -185,14 +158,6 @@ export default function SchedulePage() {
   const fillGrundschema = () =>
     fillForDates(days.map((d) => d.date), showMonth ? formatMonthLabel(days).toLowerCase() : 'veckan')
 
-  /** Läser om båda schemana från localStorage (t.ex. efter extern ändring). */
-  const refresh = () => {
-    const g = loadSchedule('grundschema')
-    if (g) setGrundschema(g)
-    const l = loadSchedule('liveschema')
-    if (l) setLiveschema(l)
-  }
-
   /** Återställer liveschemat till grundschemat (kastar veckans justeringar). */
   const resetLiveToBase = () => {
     if (
@@ -207,7 +172,6 @@ export default function SchedulePage() {
   }
 
   const isLive = mode === 'liveschema'
-  const variantSwitcher = <VariantSwitcher variant={variant} onChange={setVariant} />
 
   // Dagklick öppnar drawern – endast i liveschemat.
   const openDay = isLive ? (date: string) => setDrawerDate(date) : undefined
@@ -224,35 +188,6 @@ export default function SchedulePage() {
       />
     ) : null
 
-  // ---- Variant B: kalenderlayout ----
-  if (variant === 'kalender') {
-    return (
-      <>
-        <CalendarView
-          employees={employees}
-          templates={shiftTemplates}
-          templatesById={templatesById}
-          today={today}
-          mode={mode}
-          onChangeMode={setMode}
-          shifts={active.shifts}
-          deviationCellKeys={isLive ? deviations.cellKeys : undefined}
-          deviationCount={deviations.count}
-          onAdd={addShift}
-          onMove={moveShift}
-          onRemove={removeShift}
-          onFillForDates={fillForDates}
-          onResetLive={resetLiveToBase}
-          onRefresh={refresh}
-          onDayClick={openDay}
-          variantSwitcher={variantSwitcher}
-        />
-        {drawer}
-      </>
-    )
-  }
-
-  // ---- Variant A: matrislayout ----
   return (
     <>
     <div className={`schedule-page mode-${mode}`}>
@@ -264,7 +199,6 @@ export default function SchedulePage() {
         deviationCount={deviations.count}
         onResetLive={resetLiveToBase}
         onFillGrundschema={fillGrundschema}
-        variantSwitcher={variantSwitcher}
       />
 
       <header className="schedule-page__header">
