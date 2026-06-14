@@ -65,6 +65,8 @@ export interface Brukare {
   unit: string
   /** Kort om personen och stödbehov. */
   note?: string
+  /** Intressen/rutiner, kort lista som visas i brukarschemat. */
+  interests?: string
 }
 
 /** Typ av insats – styr ikon och färg i dagvyn. */

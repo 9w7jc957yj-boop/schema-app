@@ -36,50 +36,40 @@ npm run preview  # förhandsvisa produktionsbygget lokalt
 - Båda schemana sparas automatiskt i `localStorage`. Töm webbläsarens lagring för
   att återställa till seed-datan.
 
-## Två layoutvarianter (Matris / Kalender)
+## Personalschema och brukarschema
 
-Längst upp finns en växel **Matris / Kalender** för att jämföra två utseenden på
-samma data. Valet sparas i `localStorage`. Båda delar exakt samma scheman och
-funktioner – allt som byggts (grund/live, fyll ut, avvikelser, drag & släpp,
-totaler/konflikter) fungerar i bägge.
+Längst upp finns en växel **👤 Personal / 🏠 Brukare** som byter mellan två
+scheman:
 
-- **Matris** – den ursprungliga iOS-stilen: medarbetare som rader × dagar, med
-  pass i celler och timtotaler per dag/vecka/månad. Bäst för snabb överblick av
-  bemanning mot avtal.
-- **Kalender** – ett tidsrutnät (klockslag lodrätt, dagar vågrätt) likt ett
-  kalenderverktyg, med vänster sidofält (månadskalender + filter), statusrad och
-  passen som tidsplacerade, färgade block märkta med medarbetarens initialer.
-  Alla medarbetares pass visas samtidigt så översikten bevaras.
+- **Personalschema** – medarbetare som rader × dagar, med pass i celler och
+  timtotaler. Här finns Grundschema/Liveschema, Vecka/Månad, Fyll ut, avvikelser
+  och drag & släpp (se nedan).
+- **Brukarschema** – de **8 brukarnas** vecka: en matris av brukare × dagar där
+  varje cell visar tidsatta **aktiviteter och dagliga insatser** (med
+  kategori-ikon, ansvarig personal och plats). Vänster kolumn visar brukarens
+  enhet och intressen. Antal insatser summeras per dag och per brukare.
+
+### Lägga in aktiviteter och insatser (brukarschemat)
+
+- **Klicka i en cell** → en dialog öppnas där du fyller i vad som ska göras, tid,
+  kategori (inköp, aktivitet, utflykt, omvårdnad, medicin, måltid, städ, övrigt),
+  ansvarig personal, plats och anteckning.
+- Kryssa **"Daglig insats – upprepa måndag–söndag"** för återkommande insatser
+  (t.ex. medicin varje morgon).
+- **Klicka på ett chip** för att redigera, eller **✕** för att ta bort.
+- Insatserna sparas i `localStorage` (seedas med exempeldata första gången).
 
 ### Dagens insatser (dagdrawer)
 
-I **liveschemat** är varje dag klickbar (dagrubriken i båda varianterna, samt
-dagcellerna i kalenderns månadsvy). Ett klick öppnar en **drawer från höger** som
-beskriver dagens arbete kring brukarna/boendena:
+I **personalschemats liveläge** är varje dagrubrik klickbar. Ett klick öppnar en
+**drawer från höger** som beskriver dagens arbete kring brukarna:
 
-- en sammanfattning (**antal brukare, insatser, klara**),
+- en sammanfattning (antal brukare, insatser, klara),
 - **vem som jobbar** den dagen (personal på pass, med pass-tider),
-- ett **kort per brukare** med namn, enhet och stödbehov, samt en lista med
-  **tidsatta insatser** (t.ex. "13:00 Till stan och handla kläder") med ikon per
-  kategori, **ansvarig medarbetare** och plats, och
+- ett **kort per brukare** med tidsatta insatser, ansvarig personal och plats, och
 - en **bock** för att markera en insats som klar.
 
-Insatserna är mockade (in-memory) och knappen *Lägg till insats* är en stub i
-detta steg. Dagrubrikerna är inte klickbara i grundschemaläget.
-
-I kalendervarianten finns dessutom:
-
-- **Dag / Vecka / Månad** som tidsspann (månad visas som en kalenderöversikt med
-  chips per dag; klicka en dag för att borra ner till dagsvyn).
-- **Filter** på enhet och medarbetare. Välj en medarbetare för att kunna dra ut
-  nya pass på den personen (pass läggs på den valda medarbetaren).
-- **Statusrad** med antal pass, **krockar** (samma person dubbelbokad på
-  överlappande tider – markeras med röd ram) och **täckningsgrad** mot avtal.
-- **Mini-kalender** för att navigera, samt **Uppdatera** som läser om från
-  lagringen.
-- **Zoom** i sidofältet (− / reglage / +, 40–180 %) som gör kalendern tätare
-  eller större – skalar tidsrutnätets timhöjd och månadsöversiktens radhöjd. Vid
-  40 % får hela dygnet plats utan att scrolla. Zoomnivån sparas mellan sessioner.
+Dagrubrikerna är inte klickbara i grundschemaläget.
 
 ## Grundschema vs Liveschema
 
@@ -125,6 +115,9 @@ efter periodens längd (40 h/vecka). Liveschemat visas alltid per vecka.
 
 ## Funktioner i detta steg
 
+- **Växling Personal ⇄ Brukare** (personalschema respektive brukarschema).
+- **Brukarschema** med aktiviteter/dagliga insatser som kan läggas till, redigeras
+  och tas bort (sparas i `localStorage`).
 - **Växling Grundschema ⇄ Liveschema** med separat data och avvikelsemarkering.
 - **Automatisk ifyllning** av grundschemat utifrån bemanningsgrad (✨ Fyll ut).
 - **Vecka/Månad-vy för grundschemat** med skalad avtalsjämförelse.
@@ -149,25 +142,21 @@ src/
   types/        Domänmodell (Employee, ShiftTemplate, ScheduledShift, Schedule)
   data/         Mockad seed-data (medarbetare, passmallar, schema, brukare, insatser)
   utils/        Tidsberäkningar, vecka, färgkontrast, drag-and-drop, avvikelser,
-                autofyll, tidslayout, schemastatistik, localStorage
+                autofyll, localStorage
   components/
-    SchedulePage     Toppvy som äger båda schemana, läge och vald variant
-    VariantSwitcher  Växel mellan Matris- och Kalendervarianten
-    -- Variant A (matris) --
-    Toolbar          Toppmeny med Grundschema/Liveschema-växeln
-    ShiftPalette     Drag-källa med alla passmallar (delas av båda varianterna)
+    SchedulePage     Toppvy som äger alla scheman, läge och vald vy
+    -- Personalschema --
+    Toolbar          Toppmeny med Personal/Brukare- och Grundschema/Liveschema-växlar
+    ShiftPalette     Drag-källa med alla passmallar
     ScheduleGrid     Matrisen (tabell) + aggregering av summor
     EmployeeRow      En rad: medarbetare + dagceller + veckototal
     ShiftCell        En cell (drop-mål) som kan stapla pass
     ShiftBlock       En färgad pass-ruta (palett- och cell-variant)
     TotalsRow        Nedersta raden med kolumnsummor
-    -- Variant B (kalender) --
-    CalendarView     Kalenderlayout: sidofält, statusrad, vyer (dag/vecka/månad)
-    MiniCalendar     Navigerbar månadskalender i sidofältet
-    TimeGrid         Tidsrutnät (klockslag × dagar) med tidsplacerade pass
-    MonthOverview    Månadsöversikt med pass-chips per dag
-    -- Delat --
-    DayDrawer        Dagdrawer: dagens insatser per brukare (liveschemat)
+    DayDrawer        Dagdrawer: dagens insatser per brukare (liveläget)
+    -- Brukarschema --
+    BrukareSchedule  Matris av brukare × dagar med aktiviteter/insatser
+    ActivityDialog   Dialog för att lägga till/redigera en insats
 ```
 
 ## Datamodell

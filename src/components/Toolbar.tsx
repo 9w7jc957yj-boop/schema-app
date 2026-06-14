@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import type { ScheduleMode } from '../types'
 import type { GridView } from '../utils/week'
 import './Toolbar.css'
@@ -14,6 +15,8 @@ interface ToolbarProps {
   onResetLive: () => void
   /** Fyll ut grundschemat utifrån bemanningsgrad. */
   onFillGrundschema: () => void
+  /** Växel mellan personal- och brukarschema. */
+  kindSwitch: ReactNode
 }
 
 const MODES: { value: ScheduleMode; label: string }[] = [
@@ -39,12 +42,14 @@ export default function Toolbar({
   deviationCount,
   onResetLive,
   onFillGrundschema,
+  kindSwitch,
 }: ToolbarProps) {
   const isLive = mode === 'liveschema'
 
   return (
     <div className="toolbar">
       <div className="toolbar__group">
+        {kindSwitch}
         <button className="tb-btn" type="button" title="Filtrera (kommer senare)">
           <span className="tb-btn__icon">⛃</span>
           Filter

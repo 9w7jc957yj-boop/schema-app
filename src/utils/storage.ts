@@ -1,9 +1,11 @@
-import type { Schedule, ScheduleMode } from '../types'
+import type { DayActivity, Schedule, ScheduleMode } from '../types'
 
 const STORAGE_KEYS: Record<ScheduleMode, string> = {
   grundschema: 'schema-app:grundschema:v1',
   liveschema: 'schema-app:liveschema:v1',
 }
+
+const ACTIVITIES_KEY = 'schema-app:activities:v1'
 
 /** Läser sparat schema för ett läge från localStorage, eller null om inget finns. */
 export function loadSchedule(mode: ScheduleMode): Schedule | null {
@@ -22,6 +24,26 @@ export function saveSchedule(mode: ScheduleMode, schedule: Schedule): void {
     localStorage.setItem(STORAGE_KEYS[mode], JSON.stringify(schedule))
   } catch {
     // Ignorera (t.ex. privat läge / full kvot).
+  }
+}
+
+/** Läser brukarnas insatser från localStorage, eller null om inget finns. */
+export function loadActivities(): DayActivity[] | null {
+  try {
+    const raw = localStorage.getItem(ACTIVITIES_KEY)
+    if (!raw) return null
+    return JSON.parse(raw) as DayActivity[]
+  } catch {
+    return null
+  }
+}
+
+/** Sparar brukarnas insatser till localStorage. */
+export function saveActivities(activities: DayActivity[]): void {
+  try {
+    localStorage.setItem(ACTIVITIES_KEY, JSON.stringify(activities))
+  } catch {
+    // ignorera
   }
 }
 

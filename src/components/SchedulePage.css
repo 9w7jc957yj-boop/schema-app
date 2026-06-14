@@ -5,6 +5,40 @@
   padding-bottom: 24px;
 }
 
+/* Växel personal/brukare */
+.kind-switch {
+  display: inline-flex;
+  padding: 3px;
+  border-radius: 999px;
+  background: var(--ios-gray5);
+}
+.kind-switch__opt {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 16px;
+  border: none;
+  background: transparent;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--label-secondary);
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+.kind-switch__opt.is-active {
+  background: #fff;
+  color: var(--label);
+  box-shadow: var(--shadow-sm), 0 0 0 0.5px rgba(0, 0, 0, 0.04);
+}
+.kind-switch__icon { font-size: 14px; }
+
+.bru-hint {
+  font-size: 13px;
+  color: var(--label-tertiary);
+}
+
 .schedule-page__header {
   display: flex;
   align-items: flex-end;

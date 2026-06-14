@@ -6,8 +6,9 @@ import { employees } from '../data/employees'
 import { shiftTemplates } from '../data/shiftTemplates'
 import { brukare } from '../data/brukare'
 import { buildActivities } from '../data/activities'
+import type { DayActivity } from '../types'
 import { buildSeedSchedule, deriveLiveSchedule } from '../data/seedSchedule'
-import { loadSchedule, saveSchedule, makeId } from '../utils/storage'
+import { loadSchedule, saveSchedule, loadActivities, saveActivities, makeId } from '../utils/storage'
 import { startOfWeek, buildWeek, buildMonth, formatWeekRange, formatMonthLabel } from '../utils/week'
 import { computeDeviations } from '../utils/deviations'
 import { suggestPeriodShifts } from '../utils/autofill'
@@ -15,7 +16,11 @@ import Toolbar from './Toolbar'
 import ShiftPalette from './ShiftPalette'
 import ScheduleGrid from './ScheduleGrid'
 import DayDrawer from './DayDrawer'
+import BrukareSchedule from './BrukareSchedule'
+import type { ActivityDraft } from './ActivityDialog'
 import './SchedulePage.css'
+
+type ScheduleKind = 'personal' | 'brukare'
 
 /** Toppnivåvy som äger schemats tillstånd och kopplar ihop delarna. */
 export default function SchedulePage() {
@@ -35,11 +40,16 @@ export default function SchedulePage() {
     return [...set]
   }, [monthDays, weekDays])
 
-  // Brukarnas insatser (mockade) för perioden – visas i dagdrawern.
-  const activities = useMemo(
-    () => buildActivities(seedDates, brukare.map((b) => b.id), employees.map((e) => e.id)),
-    [seedDates],
-  )
+  // Brukarnas insatser – seedas första gången, sparas sedan i localStorage.
+  const [activities, setActivities] = useState<DayActivity[]>(() => {
+    const stored = loadActivities()
+    if (stored) return stored
+    return buildActivities(seedDates, brukare.map((b) => b.id), employees.map((e) => e.id))
+  })
+  useEffect(() => saveActivities(activities), [activities])
+
+  // Vilket schema som visas: personal eller brukare.
+  const [scheduleKind, setScheduleKind] = useState<ScheduleKind>('personal')
 
   // Grundschemat: grundbemanningen. Seedas om inget finns sparat.
   const [grundschema, setGrundschema] = useState<Schedule>(() => {
@@ -171,6 +181,24 @@ export default function SchedulePage() {
     setLiveschema(deriveLiveSchedule(grundschema))
   }
 
+  // --- Brukarnas insatser -------------------------------------------------
+
+  const addOrUpdateActivity = (a: ActivityDraft, repeatWeek: boolean) => {
+    setActivities((prev) => {
+      if (a.id) {
+        return prev.map((x) => (x.id === a.id ? ({ ...a, id: a.id } as DayActivity) : x))
+      }
+      if (repeatWeek) {
+        const created = weekDays.map((d) => ({ ...a, id: makeId('act'), date: d.date }) as DayActivity)
+        return [...prev, ...created]
+      }
+      return [...prev, { ...a, id: makeId('act') } as DayActivity]
+    })
+  }
+
+  const removeActivity = (id: string) =>
+    setActivities((prev) => prev.filter((x) => x.id !== id))
+
   const isLive = mode === 'liveschema'
 
   // Dagklick öppnar drawern – endast i liveschemat.
@@ -188,6 +216,61 @@ export default function SchedulePage() {
       />
     ) : null
 
+  const kindSwitch = (
+    <div className="kind-switch" role="tablist" aria-label="Välj schema">
+      {(['personal', 'brukare'] as ScheduleKind[]).map((k) => (
+        <button
+          key={k}
+          type="button"
+          role="tab"
+          aria-selected={scheduleKind === k}
+          className={`kind-switch__opt ${scheduleKind === k ? 'is-active' : ''}`}
+          onClick={() => setScheduleKind(k)}
+        >
+          <span className="kind-switch__icon">{k === 'personal' ? '👤' : '🏠'}</span>
+          {k === 'personal' ? 'Personal' : 'Brukare'}
+        </button>
+      ))}
+    </div>
+  )
+
+  // ---- Brukarschema ----
+  if (scheduleKind === 'brukare') {
+    return (
+      <div className="schedule-page">
+        <div className="toolbar">
+          <div className="toolbar__group">{kindSwitch}</div>
+          <div className="toolbar__group toolbar__group--end">
+            <span className="bru-hint">Klicka i en cell för att lägga till en insats</span>
+          </div>
+        </div>
+
+        <header className="schedule-page__header">
+          <div>
+            <h1 className="schedule-page__title">Brukarschema</h1>
+            <p className="schedule-page__subtitle">
+              Brukarnas aktiviteter och dagliga insatser · {formatWeekRange(weekDays)}
+            </p>
+          </div>
+          <div className="schedule-page__badges">
+            <div className="schedule-page__weekbadge">{brukare.length} brukare</div>
+          </div>
+        </header>
+
+        <BrukareSchedule
+          brukare={brukare}
+          days={weekDays}
+          activities={activities}
+          employees={employees}
+          employeesById={employeesById}
+          onAddOrUpdate={addOrUpdateActivity}
+          onRemove={removeActivity}
+        />
+      </div>
+    )
+  }
+
+  // ---- Personalschema ----
   return (
     <>
     <div className={`schedule-page mode-${mode}`}>
@@ -199,6 +282,7 @@ export default function SchedulePage() {
         deviationCount={deviations.count}
         onResetLive={resetLiveToBase}
         onFillGrundschema={fillGrundschema}
+        kindSwitch={kindSwitch}
       />
 
       <header className="schedule-page__header">
