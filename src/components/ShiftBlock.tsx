@@ -1,6 +1,5 @@
 import type { ShiftTemplate } from '../types'
 import { shiftDurationMinutes, formatMinutesAsHHMM } from '../utils/time'
-import { readableTextColor } from '../utils/color'
 import { writeDragPayload } from '../utils/dnd'
 import './ShiftBlock.css'
 
@@ -42,11 +41,7 @@ export default function ShiftBlock({ template, variant, shiftId, onRemove }: Shi
   return (
     <div
       className={`shift-block shift-block--${variant}`}
-      style={
-        isCell
-          ? { borderLeftColor: template.color }
-          : { background: template.color, color: readableTextColor(template.color) }
-      }
+      style={{ borderLeftColor: template.color }}
       draggable
       onDragStart={handleDragStart}
       onContextMenu={handleContextMenu}
@@ -55,7 +50,9 @@ export default function ShiftBlock({ template, variant, shiftId, onRemove }: Shi
       {variant === 'palette' ? (
         <div className="shift-block__palette-body">
           <span className="shift-block__label">{template.label}</span>
-          <span className="shift-block__duration">{durationLabel}</span>
+          <span className="shift-block__duration">
+            {labelIsTime ? durationLabel : `${template.startTime}–${template.endTime}`}
+          </span>
         </div>
       ) : (
         <div className="shift-block__cell-body">
