@@ -58,7 +58,6 @@ export default function ShiftBlock({ template, variant, shiftId, onRemove }: Shi
         <div className="shift-block__cell-body">
           <div className="shift-block__chip-time">
             {template.startTime}–{template.endTime}
-            {template.crossesMidnight && <span className="shift-block__nextday">+1</span>}
           </div>
           {!labelIsTime && <div className="shift-block__chip-label">{template.label}</div>}
         </div>

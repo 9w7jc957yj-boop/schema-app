@@ -72,15 +72,6 @@
   color: var(--label);
   line-height: 1.2;
 }
-.shift-block__nextday {
-  font-size: 9px;
-  font-weight: 700;
-  color: var(--label-secondary);
-  background: var(--ios-gray6);
-  border-radius: 4px;
-  padding: 0 3px;
-  line-height: 1.4;
-}
 .shift-block__chip-label {
   font-size: 11.5px;
   font-weight: 500;
