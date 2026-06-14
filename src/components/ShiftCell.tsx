@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import type { ScheduledShift, ShiftTemplate } from '../types'
 import ShiftBlock from './ShiftBlock'
-import { readDragPayload, type DragPayload } from '../utils/dnd'
+import { readDragPayload, dragKindType, type DragPayload } from '../utils/dnd'
 import './ShiftCell.css'
 
 interface ShiftCellProps {
@@ -37,7 +37,11 @@ export default function ShiftCell({
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault()
-    e.dataTransfer.dropEffect = 'move'
+    // dropEffect måste vara förenligt med effectAllowed ('copyMove'), annars
+    // blockerar webbläsaren släppet. Palett→cell = copy, flytt = move.
+    e.dataTransfer.dropEffect = e.dataTransfer.types.includes(dragKindType('template'))
+      ? 'copy'
+      : 'move'
     if (!isOver) setIsOver(true)
   }
 
