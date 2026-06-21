@@ -17,6 +17,7 @@ interface EmployeeRowProps {
   deviationCellKeys?: Set<string>
   onDropPayload: (payload: DragPayload, employeeId: string, date: string) => void
   onRemoveShift: (shiftId: string) => void
+  onEmptyCellClick?: (employeeId: string, date: string) => void
 }
 
 /** En rad i matrisen: medarbetarinfo + dagceller + periodtotal. */
@@ -30,6 +31,7 @@ export default function EmployeeRow({
   deviationCellKeys,
   onDropPayload,
   onRemoveShift,
+  onEmptyCellClick,
 }: EmployeeRowProps) {
   // Avtalade minuter skalas efter periodens längd (40 h/vecka).
   const contractMinutes = Math.round(employee.weeklyContractHours * 60 * contractMultiplier)
@@ -64,6 +66,7 @@ export default function EmployeeRow({
           templatesById={templatesById}
           onDropPayload={onDropPayload}
           onRemoveShift={onRemoveShift}
+          onEmptyClick={onEmptyCellClick}
         />
       ))}
 

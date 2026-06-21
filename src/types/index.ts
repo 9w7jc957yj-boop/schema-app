@@ -33,6 +33,13 @@ export interface ShiftTemplate {
   crossesMidnight: boolean
   /** Frivillig tvådelad visning för nattpass (före/efter midnatt). */
   segments?: TimeSegment[]
+  /** True för tillfälliga pass skapade direkt i en cell – visas ej i paletten. */
+  temporary?: boolean
+  /**
+   * Verksamheter som får använda mallen. Tom/utelämnad = alla verksamheter
+   * (gäller standardmallarna som seedas).
+   */
+  verksamhetIds?: string[]
 }
 
 /** Ett konkret pass utlagt på en medarbetare en viss dag. */
@@ -56,6 +63,18 @@ export interface Schedule {
  * - `liveschema`: den aktiva veckan, justeras löpande (t.ex. vid sjukdom).
  */
 export type ScheduleMode = 'grundschema' | 'liveschema'
+
+/** En verksamhet/enhet som schemat kan filtreras på. */
+export interface Verksamhet {
+  id: string
+  name: string
+}
+
+/** Tillgängliga verksamheter att växla mellan i toppmenyn. */
+export const VERKSAMHETER: Verksamhet[] = [
+  { id: 'idrottsvagen', name: 'Idrottsvägen' },
+  { id: 'malmtuna', name: 'Malmtuna' },
+]
 
 /** En brukare/boende som personalen ger stöd. */
 export interface Brukare {

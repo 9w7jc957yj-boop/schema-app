@@ -1,11 +1,12 @@
-import type { DayActivity, Schedule, ScheduleMode } from '../types'
+import type { DayActivity, Schedule, ScheduleMode, ShiftTemplate } from '../types'
 
 const STORAGE_KEYS: Record<ScheduleMode, string> = {
-  grundschema: 'schema-app:grundschema:v1',
-  liveschema: 'schema-app:liveschema:v1',
+  grundschema: 'schema-app:grundschema:v2',
+  liveschema: 'schema-app:liveschema:v2',
 }
 
 const ACTIVITIES_KEY = 'schema-app:activities:v1'
+const TEMPLATES_KEY = 'schema-app:templates:v2'
 
 /** Läser sparat schema för ett läge från localStorage, eller null om inget finns. */
 export function loadSchedule(mode: ScheduleMode): Schedule | null {
@@ -42,6 +43,26 @@ export function loadActivities(): DayActivity[] | null {
 export function saveActivities(activities: DayActivity[]): void {
   try {
     localStorage.setItem(ACTIVITIES_KEY, JSON.stringify(activities))
+  } catch {
+    // ignorera
+  }
+}
+
+/** Läser sparade passmallar från localStorage, eller null om inget finns. */
+export function loadTemplates(): ShiftTemplate[] | null {
+  try {
+    const raw = localStorage.getItem(TEMPLATES_KEY)
+    if (!raw) return null
+    return JSON.parse(raw) as ShiftTemplate[]
+  } catch {
+    return null
+  }
+}
+
+/** Sparar passmallar till localStorage. */
+export function saveTemplates(templates: ShiftTemplate[]): void {
+  try {
+    localStorage.setItem(TEMPLATES_KEY, JSON.stringify(templates))
   } catch {
     // ignorera
   }

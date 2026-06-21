@@ -24,6 +24,8 @@ interface ScheduleGridProps {
   onDayClick?: (date: string) => void
   onDropPayload: (payload: DragPayload, employeeId: string, date: string) => void
   onRemoveShift: (shiftId: string) => void
+  /** Klick på tom cell (endast liveschema) – för tillfälligt pass. */
+  onEmptyCellClick?: (employeeId: string, date: string) => void
 }
 
 /** Själva matrisen: medarbetare (rader) × dagar (kolumner) med totalrad. */
@@ -39,6 +41,7 @@ export default function ScheduleGrid({
   onDayClick,
   onDropPayload,
   onRemoveShift,
+  onEmptyCellClick,
 }: ScheduleGridProps) {
   // Aggregera alla summor en gång per render – endast pass inom visad period.
   const agg = useMemo(() => {
@@ -117,6 +120,7 @@ export default function ScheduleGrid({
               deviationCellKeys={deviationCellKeys}
               onDropPayload={onDropPayload}
               onRemoveShift={onRemoveShift}
+              onEmptyCellClick={onEmptyCellClick}
             />
           ))}
         </tbody>

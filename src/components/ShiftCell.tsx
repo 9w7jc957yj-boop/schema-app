@@ -16,6 +16,8 @@ interface ShiftCellProps {
   templatesById: Map<string, ShiftTemplate>
   onDropPayload: (payload: DragPayload, employeeId: string, date: string) => void
   onRemoveShift: (shiftId: string) => void
+  /** Klick på en tom cell (endast liveschema) – öppnar dialog för tillfälligt pass. */
+  onEmptyClick?: (employeeId: string, date: string) => void
 }
 
 /**
@@ -32,8 +34,11 @@ export default function ShiftCell({
   templatesById,
   onDropPayload,
   onRemoveShift,
+  onEmptyClick,
 }: ShiftCellProps) {
   const [isOver, setIsOver] = useState(false)
+  const isEmpty = shifts.length === 0
+  const canAdd = Boolean(onEmptyClick) && isEmpty
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault()
@@ -58,11 +63,14 @@ export default function ShiftCell({
     <td
       className={`cell ${isWeekend ? 'cell--weekend' : ''} ${isOver ? 'cell--over' : ''} ${
         isDeviation ? 'cell--deviation' : ''
-      } ${isWeekStart ? 'cell--weekstart' : ''}`}
+      } ${isWeekStart ? 'cell--weekstart' : ''} ${canAdd ? 'cell--addable' : ''}`}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
+      onClick={canAdd ? () => onEmptyClick!(employeeId, date) : undefined}
+      title={canAdd ? 'Lägg till tillfälligt pass' : undefined}
     >
+      {canAdd && <span className="cell__add" aria-hidden="true">+</span>}
       <div className="cell__stack">
         {shifts.map((shift) => {
           const template = templatesById.get(shift.templateId)

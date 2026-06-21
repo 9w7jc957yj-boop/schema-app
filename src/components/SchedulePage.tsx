@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
-import type { Schedule, ScheduledShift, ScheduleMode } from '../types'
+import type { Schedule, ScheduledShift, ScheduleMode, ShiftTemplate } from '../types'
+import { VERKSAMHETER } from '../types'
 import type { GridView } from '../utils/week'
 import type { DragPayload } from '../utils/dnd'
 import { employees } from '../data/employees'
@@ -8,15 +9,18 @@ import { brukare } from '../data/brukare'
 import { buildActivities } from '../data/activities'
 import type { DayActivity } from '../types'
 import { buildSeedSchedule, deriveLiveSchedule } from '../data/seedSchedule'
-import { loadSchedule, saveSchedule, loadActivities, saveActivities, makeId } from '../utils/storage'
+import { loadSchedule, saveSchedule, loadActivities, saveActivities, loadTemplates, saveTemplates, makeId } from '../utils/storage'
 import { startOfWeek, buildWeek, buildMonth, formatWeekRange, formatMonthLabel } from '../utils/week'
 import { computeDeviations } from '../utils/deviations'
+import { parseTimeToMinutes } from '../utils/time'
 import { suggestPeriodShifts } from '../utils/autofill'
 import Toolbar from './Toolbar'
 import ShiftPalette from './ShiftPalette'
 import ScheduleGrid from './ScheduleGrid'
 import DayDrawer from './DayDrawer'
 import BrukareSchedule from './BrukareSchedule'
+import TempShiftDialog from './TempShiftDialog'
+import ConfirmDialog from './ConfirmDialog'
 import type { ActivityDraft } from './ActivityDialog'
 import './SchedulePage.css'
 
@@ -27,9 +31,12 @@ export default function SchedulePage() {
   // Veckan och månaden beräknas en gång kring dagens datum.
   const weekDays = useMemo(() => buildWeek(startOfWeek(new Date())), [])
   const monthDays = useMemo(() => buildMonth(new Date()), [])
+  // Passmallar – seedas från standardmallarna, sparas sedan i localStorage.
+  const [templates, setTemplates] = useState<ShiftTemplate[]>(() => loadTemplates() ?? shiftTemplates)
+  useEffect(() => saveTemplates(templates), [templates])
   const templatesById = useMemo(
-    () => new Map(shiftTemplates.map((t) => [t.id, t])),
-    [],
+    () => new Map(templates.map((t) => [t.id, t])),
+    [templates],
   )
   const employeesById = useMemo(() => new Map(employees.map((e) => [e.id, e])), [])
   const brukareById = useMemo(() => new Map(brukare.map((b) => [b.id, b])), [])
@@ -51,6 +58,9 @@ export default function SchedulePage() {
   // Vilket schema som visas: personal eller brukare.
   const [scheduleKind, setScheduleKind] = useState<ScheduleKind>('personal')
 
+  // Vald verksamhet att filtrera på (används framöver för att filtrera datan).
+  const [verksamhetId, setVerksamhetId] = useState<string>(VERKSAMHETER[0].id)
+
   // Grundschemat: grundbemanningen. Seedas om inget finns sparat.
   const [grundschema, setGrundschema] = useState<Schedule>(() => {
     const stored = loadSchedule('grundschema')
@@ -68,6 +78,12 @@ export default function SchedulePage() {
   const [mode, setMode] = useState<ScheduleMode>('liveschema')
   // Vy för grundschemat (vecka/månad). Liveschemat visas alltid per vecka.
   const [grundView, setGrundView] = useState<GridView>('manad')
+
+  // Tillfälligt pass: vald tom cell (endast liveschema) som öppnar tidsdialogen.
+  const [tempCell, setTempCell] = useState<{ employeeId: string; date: string } | null>(null)
+
+  // Pass som väntar på bekräftelse innan borttagning.
+  const [pendingRemoveId, setPendingRemoveId] = useState<string | null>(null)
 
   // Dagdrawer: vald dag (endast i liveschemat) som visar dagens insatser.
   const [drawerDate, setDrawerDate] = useState<string | null>(null)
@@ -104,6 +120,40 @@ export default function SchedulePage() {
     () => computeDeviations(grundschema, liveschema),
     [grundschema, liveschema],
   )
+
+  // Lägger till en ny passmall i paletten (endast från grundschemat).
+  const createTemplate = (template: ShiftTemplate) =>
+    setTemplates((prev) => [...prev, template])
+
+  /**
+   * Lägger till ett tillfälligt pass i en tom cell i liveschemat. Skapar (eller
+   * återanvänder) en dold tidsmall och lägger ut ett pass på medarbetaren.
+   */
+  const addTemporaryShift = (employeeId: string, date: string, startTime: string, endTime: string) => {
+    const crossesMidnight = parseTimeToMinutes(endTime) <= parseTimeToMinutes(startTime)
+    const label = `${startTime}–${endTime}`
+    let templateId = templates.find(
+      (t) => t.temporary && t.startTime === startTime && t.endTime === endTime,
+    )?.id
+    if (!templateId) {
+      const tpl: ShiftTemplate = {
+        id: makeId('tpl-temp'),
+        label,
+        startTime,
+        endTime,
+        color: '#8E8E93',
+        crossesMidnight,
+        temporary: true,
+      }
+      templateId = tpl.id
+      setTemplates((prev) => [...prev, tpl])
+    }
+    setLiveschema((prev) => ({
+      ...prev,
+      shifts: [...prev.shifts, { id: makeId('shift'), employeeId, date, templateId } as ScheduledShift],
+    }))
+    setTempCell(null)
+  }
 
   // --- Mutationer på det aktiva schemat ----------------------------------
 
@@ -168,19 +218,6 @@ export default function SchedulePage() {
   const fillGrundschema = () =>
     fillForDates(days.map((d) => d.date), showMonth ? formatMonthLabel(days).toLowerCase() : 'veckan')
 
-  /** Återställer liveschemat till grundschemat (kastar veckans justeringar). */
-  const resetLiveToBase = () => {
-    if (
-      deviations.count > 0 &&
-      !window.confirm(
-        `Återställ liveschemat till grundschemat? ${deviations.count} avvikelse(r) i veckan tas bort.`,
-      )
-    ) {
-      return
-    }
-    setLiveschema(deriveLiveSchedule(grundschema))
-  }
-
   // --- Brukarnas insatser -------------------------------------------------
 
   const addOrUpdateActivity = (a: ActivityDraft, repeatWeek: boolean) => {
@@ -216,6 +253,34 @@ export default function SchedulePage() {
       />
     ) : null
 
+  // Rubrik för tidsdialogen, t.ex. "Anna Lindqvist · Mån 15/6".
+  const tempCellLabel = (() => {
+    if (!tempCell) return ''
+    const emp = employeesById.get(tempCell.employeeId)
+    const day = days.find((d) => d.date === tempCell.date)
+    const name = emp ? `${emp.firstName} ${emp.lastName}` : ''
+    const when = day ? `${day.weekdayLabel} ${day.dateLabel}` : ''
+    return [name, when].filter(Boolean).join(' · ')
+  })()
+
+  const verksamhetSelect = (
+    <label className="verksamhet-select" aria-label="Välj verksamhet">
+      <span className="verksamhet-select__icon" aria-hidden="true">⛃</span>
+      <select
+        className="verksamhet-select__input"
+        value={verksamhetId}
+        onChange={(e) => setVerksamhetId(e.target.value)}
+      >
+        {VERKSAMHETER.map((v) => (
+          <option key={v.id} value={v.id}>
+            {v.name}
+          </option>
+        ))}
+      </select>
+      <span className="verksamhet-select__chevron" aria-hidden="true">⌄</span>
+    </label>
+  )
+
   const kindSwitch = (
     <div className="kind-switch" role="tablist" aria-label="Välj schema">
       {(['personal', 'brukare'] as ScheduleKind[]).map((k) => (
@@ -239,7 +304,8 @@ export default function SchedulePage() {
     return (
       <div className="schedule-page">
         <div className="toolbar">
-          <div className="toolbar__group">{kindSwitch}</div>
+          <div className="toolbar__group">{verksamhetSelect}</div>
+          <div className="toolbar__group toolbar__group--center">{kindSwitch}</div>
           <div className="toolbar__group toolbar__group--end">
             <span className="bru-hint">Klicka i en cell för att lägga till en insats</span>
           </div>
@@ -276,23 +342,31 @@ export default function SchedulePage() {
     <div className={`schedule-page mode-${mode}`}>
       <Toolbar
         mode={mode}
-        onChangeMode={setMode}
-        grundView={grundView}
-        onChangeGrundView={setGrundView}
-        deviationCount={deviations.count}
-        onResetLive={resetLiveToBase}
         onFillGrundschema={fillGrundschema}
+        verksamhetSelect={verksamhetSelect}
         kindSwitch={kindSwitch}
       />
 
       <header className="schedule-page__header">
         <div>
-          <h1 className="schedule-page__title">
-            {isLive ? 'Liveschema' : 'Grundschema'}
-            <span className={`mode-pill mode-pill--${mode}`}>
-              {isLive ? 'Live' : 'Grund'}
-            </span>
-          </h1>
+          <div className="mode-switch mode-switch--header" role="tablist" aria-label="Välj schema">
+            <span className="mode-switch__thumb" data-mode={mode} aria-hidden="true" />
+            {([
+              { value: 'grundschema', label: 'Grundschema' },
+              { value: 'liveschema', label: 'Liveschema' },
+            ] as const).map((m) => (
+              <button
+                key={m.value}
+                type="button"
+                role="tab"
+                aria-selected={mode === m.value}
+                className={`mode-switch__option ${mode === m.value ? 'is-active' : ''}`}
+                onClick={() => setMode(m.value)}
+              >
+                {m.label}
+              </button>
+            ))}
+          </div>
           <p className="schedule-page__subtitle">
             {isLive
               ? 'Veckans aktiva schema – justera vid sjukdom eller ändringar'
@@ -312,13 +386,38 @@ export default function SchedulePage() {
                 : 'Följer grundschemat'}
             </div>
           )}
+          {!isLive && (
+            <div className="view-switch" role="group" aria-label="Vecka eller månad">
+              {([
+                { value: 'vecka', label: 'Vecka' },
+                { value: 'manad', label: 'Månad' },
+              ] as const).map((v) => (
+                <button
+                  key={v.value}
+                  type="button"
+                  aria-pressed={grundView === v.value}
+                  className={`view-switch__option ${grundView === v.value ? 'is-active' : ''}`}
+                  onClick={() => setGrundView(v.value)}
+                >
+                  {v.label}
+                </button>
+              ))}
+            </div>
+          )}
           <div className="schedule-page__weekbadge">
             {showMonth ? formatMonthLabel(days) : `v.${getWeekNumber(days[0].date)}`}
           </div>
         </div>
       </header>
 
-      <ShiftPalette templates={shiftTemplates} />
+      <ShiftPalette
+        templates={templates.filter(
+          (t) =>
+            !t.temporary &&
+            (!t.verksamhetIds || t.verksamhetIds.length === 0 || t.verksamhetIds.includes(verksamhetId)),
+        )}
+        onCreate={isLive ? undefined : createTemplate}
+      />
 
       <ScheduleGrid
         employees={employees}
@@ -331,10 +430,31 @@ export default function SchedulePage() {
         deviationCellKeys={isLive ? deviations.cellKeys : undefined}
         onDayClick={openDay}
         onDropPayload={handleDropPayload}
-        onRemoveShift={removeShift}
+        onRemoveShift={setPendingRemoveId}
+        onEmptyCellClick={isLive ? (employeeId, date) => setTempCell({ employeeId, date }) : undefined}
       />
     </div>
     {drawer}
+    {tempCell && (
+      <TempShiftDialog
+        contextLabel={tempCellLabel}
+        onSave={(start, end) => addTemporaryShift(tempCell.employeeId, tempCell.date, start, end)}
+        onClose={() => setTempCell(null)}
+      />
+    )}
+    {pendingRemoveId && (
+      <ConfirmDialog
+        message="Vill du ta bort det här passet?"
+        confirmLabel="Ta bort pass"
+        cancelLabel="Avbryt"
+        danger
+        onConfirm={() => {
+          removeShift(pendingRemoveId)
+          setPendingRemoveId(null)
+        }}
+        onCancel={() => setPendingRemoveId(null)}
+      />
+    )}
     </>
   )
 }

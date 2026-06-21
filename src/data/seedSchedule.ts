@@ -9,48 +9,46 @@ import { makeId } from '../utils/storage'
  * Varje rad nedan är [medarbetarIndex, dagIndex, passmallId].
  */
 const SEED: Array<[number, number, string]> = [
-  // Anna (100 %) – dagpass mån–fre
-  [0, 0, 'tpl-dag-0700'],
-  [0, 1, 'tpl-dag-0700'],
-  [0, 2, 'tpl-dag-0700'],
-  [0, 3, 'tpl-dag-0800'],
-  [0, 4, 'tpl-dag-0800'],
+  // Anna (100 %) – dagspass mån–fre
+  [0, 0, 'tpl-dag'],
+  [0, 1, 'tpl-dag'],
+  [0, 2, 'tpl-dag'],
+  [0, 3, 'tpl-dag'],
+  [0, 4, 'tpl-dag'],
 
-  // Johan (75 %) – mellan/kväll, ledig torsdag
-  [1, 0, 'tpl-mellan'],
-  [1, 1, 'tpl-kvall-1330'],
-  [1, 2, 'tpl-kvall-1330'],
-  [1, 4, 'tpl-mellan'],
+  // Johan (75 %) – kvällspass, ledig torsdag
+  [1, 0, 'tpl-kvall'],
+  [1, 1, 'tpl-kvall'],
+  [1, 2, 'tpl-kvall'],
+  [1, 4, 'tpl-kvall'],
 
   // Sara (100 %) – jour och helg
-  [2, 0, 'tpl-jourdag'],
-  [2, 1, 'tpl-dag-0600'],
-  [2, 2, 'tpl-dag-0600'],
-  [2, 5, 'tpl-helgdag'],
-  [2, 6, 'tpl-helgdag'],
+  [2, 0, 'tpl-jour'],
+  [2, 1, 'tpl-morgon'],
+  [2, 2, 'tpl-morgon'],
+  [2, 5, 'tpl-helg'],
+  [2, 6, 'tpl-helg'],
 
-  // Mehmet (50 %) – några korta pass
-  [3, 1, 'tpl-kort'],
-  [3, 2, 'tpl-admin'],
-  [3, 3, 'tpl-kort'],
+  // Mehmet (50 %) – några morgonpass
+  [3, 1, 'tpl-morgon'],
+  [3, 3, 'tpl-morgon'],
 
-  // Elin (80 %) – tidig + utbildning
-  [4, 0, 'tpl-tidig'],
-  [4, 1, 'tpl-tidig'],
-  [4, 2, 'tpl-utbildning'],
-  [4, 3, 'tpl-dag-0800'],
+  // Elin (80 %) – morgon + dag
+  [4, 0, 'tpl-morgon'],
+  [4, 1, 'tpl-morgon'],
+  [4, 2, 'tpl-dag'],
+  [4, 3, 'tpl-dag'],
 
   // David (100 %) – kvällar + helg
-  [5, 1, 'tpl-kvall-1400'],
-  [5, 2, 'tpl-kvall-1400'],
-  [5, 3, 'tpl-kvall-1400'],
-  [5, 5, 'tpl-helgdag'],
+  [5, 1, 'tpl-kvall'],
+  [5, 2, 'tpl-kvall'],
+  [5, 3, 'tpl-kvall'],
+  [5, 5, 'tpl-helg'],
 
-  // Fatima (75 %) – nattpass (korsar midnatt)
-  [6, 0, 'tpl-natt'],
-  [6, 1, 'tpl-natt'],
-  [6, 3, 'tpl-journatt'],
-  [6, 5, 'tpl-helgnatt'],
+  // Fatima (75 %) – jour och helg
+  [6, 0, 'tpl-jour'],
+  [6, 3, 'tpl-jour'],
+  [6, 5, 'tpl-helg'],
 ]
 
 /** Veckodagsindex (måndag = 0 ... söndag = 6) för en "YYYY-MM-DD"-sträng. */
