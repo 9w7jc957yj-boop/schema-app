@@ -8,7 +8,7 @@ interface TempShiftDialogProps {
   onClose: () => void
 }
 
-/** Minimal modal för ett tillfälligt pass i liveschemat – endast tid. */
+/** Minimal modal för att lägga till ett pass i en cell – endast tid. */
 export default function TempShiftDialog({ contextLabel, onSave, onClose }: TempShiftDialogProps) {
   const [startTime, setStartTime] = useState('08:00')
   const [endTime, setEndTime] = useState('16:00')
@@ -27,13 +27,13 @@ export default function TempShiftDialog({ contextLabel, onSave, onClose }: TempS
   }
 
   return (
-    <div className="adlg-root" role="dialog" aria-modal="true" aria-label="Tillfälligt pass">
+    <div className="adlg-root" role="dialog" aria-modal="true" aria-label="Lägg till pass">
       <div className="adlg-scrim" onClick={onClose} />
       <form className="adlg adlg--narrow" onSubmit={submit}>
         <header className="adlg__head">
           <div>
             <div className="adlg__eyebrow">{contextLabel}</div>
-            <h2 className="adlg__title">Tillfälligt pass</h2>
+            <h2 className="adlg__title">Lägg till pass</h2>
           </div>
           <button className="adlg__close" type="button" onClick={onClose} aria-label="Stäng">✕</button>
         </header>

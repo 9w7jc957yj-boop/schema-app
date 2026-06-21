@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import type { Schedule, ScheduledShift, ScheduleMode, ShiftTemplate } from '../types'
+import type { Schedule, ScheduledShift, ShiftTemplate } from '../types'
 import { VERKSAMHETER } from '../types'
 import type { GridView } from '../utils/week'
 import type { DragPayload } from '../utils/dnd'
@@ -8,10 +8,9 @@ import { shiftTemplates } from '../data/shiftTemplates'
 import { brukare } from '../data/brukare'
 import { buildActivities } from '../data/activities'
 import type { DayActivity } from '../types'
-import { buildSeedSchedule, deriveLiveSchedule } from '../data/seedSchedule'
+import { buildSeedSchedule } from '../data/seedSchedule'
 import { loadSchedule, saveSchedule, loadActivities, saveActivities, loadTemplates, saveTemplates, makeId } from '../utils/storage'
 import { startOfWeek, buildWeek, buildMonth, formatWeekRange, formatMonthLabel } from '../utils/week'
-import { computeDeviations } from '../utils/deviations'
 import { parseTimeToMinutes } from '../utils/time'
 import { suggestPeriodShifts } from '../utils/autofill'
 import Toolbar from './Toolbar'
@@ -61,36 +60,28 @@ export default function SchedulePage() {
   // Vald verksamhet att filtrera på (används framöver för att filtrera datan).
   const [verksamhetId, setVerksamhetId] = useState<string>(VERKSAMHETER[0].id)
 
-  // Grundschemat: grundbemanningen. Seedas om inget finns sparat.
+  // Grundschemat: enda schemat. Seedas om inget finns sparat.
   const [grundschema, setGrundschema] = useState<Schedule>(() => {
     const stored = loadSchedule('grundschema')
     if (stored) return stored
     return buildSeedSchedule(seedDates, employees.map((e) => e.id))
   })
 
-  // Liveschemat: ärver grundbemanningen vid första start, justeras sedan fritt.
-  const [liveschema, setLiveschema] = useState<Schedule>(() => {
-    const stored = loadSchedule('liveschema')
-    if (stored) return stored
-    return deriveLiveSchedule(grundschema)
-  })
-
-  const [mode, setMode] = useState<ScheduleMode>('liveschema')
-  // Vy för grundschemat (vecka/månad). Liveschemat visas alltid per vecka.
+  // Vy för schemat (vecka/månad).
   const [grundView, setGrundView] = useState<GridView>('manad')
 
-  // Tillfälligt pass: vald tom cell (endast liveschema) som öppnar tidsdialogen.
+  // Lägga till pass: vald tom cell som öppnar tidsdialogen.
   const [tempCell, setTempCell] = useState<{ employeeId: string; date: string } | null>(null)
 
   // Pass som väntar på bekräftelse innan borttagning.
   const [pendingRemoveId, setPendingRemoveId] = useState<string | null>(null)
 
-  // Dagdrawer: vald dag (endast i liveschemat) som visar dagens insatser.
+  // Dagdrawer: vald dag som visar dagens insatser.
   const [drawerDate, setDrawerDate] = useState<string | null>(null)
   const drawerData = useMemo(() => {
     if (!drawerDate) return null
     const acts = activities.filter((a) => a.date === drawerDate)
-    const onDuty = liveschema.shifts
+    const onDuty = grundschema.shifts
       .filter((s) => s.date === drawerDate)
       .map((s) => ({ employee: employeesById.get(s.employeeId), template: templatesById.get(s.templateId) }))
       .filter((x): x is { employee: NonNullable<typeof x.employee>; template: NonNullable<typeof x.template> } =>
@@ -98,35 +89,24 @@ export default function SchedulePage() {
       )
       .sort((a, b) => a.template.startTime.localeCompare(b.template.startTime))
     return { acts, onDuty }
-  }, [drawerDate, activities, liveschema, employeesById, templatesById])
+  }, [drawerDate, activities, grundschema, employeesById, templatesById])
 
-  // Aktivt schema + dess setter beroende på läge.
-  const active = mode === 'grundschema' ? grundschema : liveschema
-  const setActive = mode === 'grundschema' ? setGrundschema : setLiveschema
-
-  // Visad period: grundschemat kan visas per månad, annars vecka.
-  const showMonth = mode === 'grundschema' && grundView === 'manad'
+  // Visad period: månad eller vecka.
+  const showMonth = grundView === 'manad'
   const days = showMonth ? monthDays : weekDays
   const view: GridView = showMonth ? 'manad' : 'vecka'
   const contractMultiplier = days.length / 7
   const totalHeaderLabel = showMonth ? 'Månad / Avtal' : 'Vecka / Avtal'
 
-  // Persistens per läge.
+  // Persistens.
   useEffect(() => saveSchedule('grundschema', grundschema), [grundschema])
-  useEffect(() => saveSchedule('liveschema', liveschema), [liveschema])
 
-  // Avvikelser: var liveschemat skiljer sig från grundbemanningen.
-  const deviations = useMemo(
-    () => computeDeviations(grundschema, liveschema),
-    [grundschema, liveschema],
-  )
-
-  // Lägger till en ny passmall i paletten (endast från grundschemat).
+  // Lägger till en ny passmall i paletten.
   const createTemplate = (template: ShiftTemplate) =>
     setTemplates((prev) => [...prev, template])
 
   /**
-   * Lägger till ett tillfälligt pass i en tom cell i liveschemat. Skapar (eller
+   * Lägger till ett pass i en tom cell via tidsdialogen. Skapar (eller
    * återanvänder) en dold tidsmall och lägger ut ett pass på medarbetaren.
    */
   const addTemporaryShift = (employeeId: string, date: string, startTime: string, endTime: string) => {
@@ -148,17 +128,17 @@ export default function SchedulePage() {
       templateId = tpl.id
       setTemplates((prev) => [...prev, tpl])
     }
-    setLiveschema((prev) => ({
+    setGrundschema((prev) => ({
       ...prev,
       shifts: [...prev.shifts, { id: makeId('shift'), employeeId, date, templateId } as ScheduledShift],
     }))
     setTempCell(null)
   }
 
-  // --- Mutationer på det aktiva schemat ----------------------------------
+  // --- Mutationer på schemat ----------------------------------------------
 
   const addShift = (employeeId: string, date: string, templateId: string) => {
-    setActive((prev) => ({
+    setGrundschema((prev) => ({
       ...prev,
       shifts: [
         ...prev.shifts,
@@ -168,7 +148,7 @@ export default function SchedulePage() {
   }
 
   const moveShift = (shiftId: string, employeeId: string, date: string) => {
-    setActive((prev) => ({
+    setGrundschema((prev) => ({
       ...prev,
       shifts: prev.shifts.map((s) =>
         s.id === shiftId ? { ...s, employeeId, date } : s,
@@ -177,7 +157,7 @@ export default function SchedulePage() {
   }
 
   const removeShift = (shiftId: string) => {
-    setActive((prev) => ({
+    setGrundschema((prev) => ({
       ...prev,
       shifts: prev.shifts.filter((s) => s.id !== shiftId),
     }))
@@ -236,10 +216,8 @@ export default function SchedulePage() {
   const removeActivity = (id: string) =>
     setActivities((prev) => prev.filter((x) => x.id !== id))
 
-  const isLive = mode === 'liveschema'
-
-  // Dagklick öppnar drawern – endast i liveschemat.
-  const openDay = isLive ? (date: string) => setDrawerDate(date) : undefined
+  // Dagklick öppnar drawern.
+  const openDay = (date: string) => setDrawerDate(date)
 
   const drawer =
     drawerData && drawerDate ? (
@@ -339,9 +317,8 @@ export default function SchedulePage() {
   // ---- Personalschema ----
   return (
     <>
-    <div className={`schedule-page mode-${mode}`}>
+    <div className="schedule-page">
       <Toolbar
-        mode={mode}
         onFillGrundschema={fillGrundschema}
         verksamhetSelect={verksamhetSelect}
         kindSwitch={kindSwitch}
@@ -349,61 +326,28 @@ export default function SchedulePage() {
 
       <header className="schedule-page__header">
         <div>
-          <div className="mode-switch mode-switch--header" role="tablist" aria-label="Välj schema">
-            <span className="mode-switch__thumb" data-mode={mode} aria-hidden="true" />
-            {([
-              { value: 'grundschema', label: 'Grundschema' },
-              { value: 'liveschema', label: 'Liveschema' },
-            ] as const).map((m) => (
-              <button
-                key={m.value}
-                type="button"
-                role="tab"
-                aria-selected={mode === m.value}
-                className={`mode-switch__option ${mode === m.value ? 'is-active' : ''}`}
-                onClick={() => setMode(m.value)}
-              >
-                {m.label}
-              </button>
-            ))}
-          </div>
+          <h1 className="schedule-page__title">Grundschema</h1>
           <p className="schedule-page__subtitle">
-            {isLive
-              ? 'Veckans aktiva schema – justera vid sjukdom eller ändringar'
-              : 'Grundbemanning – mallen som liveschemat utgår från'}
-            {' · '}
-            {showMonth ? formatMonthLabel(days) : formatWeekRange(days)}
+            Grundbemanning · {showMonth ? formatMonthLabel(days) : formatWeekRange(days)}
           </p>
         </div>
         <div className="schedule-page__badges">
-          {isLive && (
-            <div
-              className={`dev-chip ${deviations.count > 0 ? 'is-active' : ''}`}
-              title="Antal celler som skiljer sig från grundschemat"
-            >
-              {deviations.count > 0
-                ? `${deviations.count} avvikelse${deviations.count === 1 ? '' : 'r'}`
-                : 'Följer grundschemat'}
-            </div>
-          )}
-          {!isLive && (
-            <div className="view-switch" role="group" aria-label="Vecka eller månad">
-              {([
-                { value: 'vecka', label: 'Vecka' },
-                { value: 'manad', label: 'Månad' },
-              ] as const).map((v) => (
-                <button
-                  key={v.value}
-                  type="button"
-                  aria-pressed={grundView === v.value}
-                  className={`view-switch__option ${grundView === v.value ? 'is-active' : ''}`}
-                  onClick={() => setGrundView(v.value)}
-                >
-                  {v.label}
-                </button>
-              ))}
-            </div>
-          )}
+          <div className="view-switch" role="group" aria-label="Vecka eller månad">
+            {([
+              { value: 'vecka', label: 'Vecka' },
+              { value: 'manad', label: 'Månad' },
+            ] as const).map((v) => (
+              <button
+                key={v.value}
+                type="button"
+                aria-pressed={grundView === v.value}
+                className={`view-switch__option ${grundView === v.value ? 'is-active' : ''}`}
+                onClick={() => setGrundView(v.value)}
+              >
+                {v.label}
+              </button>
+            ))}
+          </div>
           <div className="schedule-page__weekbadge">
             {showMonth ? formatMonthLabel(days) : `v.${getWeekNumber(days[0].date)}`}
           </div>
@@ -416,22 +360,21 @@ export default function SchedulePage() {
             !t.temporary &&
             (!t.verksamhetIds || t.verksamhetIds.length === 0 || t.verksamhetIds.includes(verksamhetId)),
         )}
-        onCreate={isLive ? undefined : createTemplate}
+        onCreate={createTemplate}
       />
 
       <ScheduleGrid
         employees={employees}
         days={days}
-        shifts={active.shifts}
+        shifts={grundschema.shifts}
         templatesById={templatesById}
         view={view}
         contractMultiplier={contractMultiplier}
         totalHeaderLabel={totalHeaderLabel}
-        deviationCellKeys={isLive ? deviations.cellKeys : undefined}
         onDayClick={openDay}
         onDropPayload={handleDropPayload}
         onRemoveShift={setPendingRemoveId}
-        onEmptyCellClick={isLive ? (employeeId, date) => setTempCell({ employeeId, date }) : undefined}
+        onEmptyCellClick={(employeeId, date) => setTempCell({ employeeId, date })}
       />
     </div>
     {drawer}

@@ -1,9 +1,7 @@
 import type { ReactNode } from 'react'
-import type { ScheduleMode } from '../types'
 import './Toolbar.css'
 
 interface ToolbarProps {
-  mode: ScheduleMode
   /** Fyll ut grundschemat utifrån bemanningsgrad. */
   onFillGrundschema: () => void
   /** Verksamhetsväljaren (delas med brukarvyn för identisk placering). */
@@ -18,13 +16,10 @@ interface ToolbarProps {
  * höger.
  */
 export default function Toolbar({
-  mode,
   onFillGrundschema,
   verksamhetSelect,
   kindSwitch,
 }: ToolbarProps) {
-  const isLive = mode === 'liveschema'
-
   return (
     <div className="toolbar">
       <div className="toolbar__group">{verksamhetSelect}</div>
@@ -32,16 +27,14 @@ export default function Toolbar({
       <div className="toolbar__group toolbar__group--center">{kindSwitch}</div>
 
       <div className="toolbar__group toolbar__group--end">
-        {!isLive && (
-          <button
-            className="tb-btn tb-btn--magic"
-            type="button"
-            onClick={onFillGrundschema}
-            title="Fyll ut grundschemat utifrån bemanningsgrad"
-          >
-            ✨ Fyll ut
-          </button>
-        )}
+        <button
+          className="tb-btn tb-btn--magic"
+          type="button"
+          onClick={onFillGrundschema}
+          title="Fyll ut grundschemat utifrån bemanningsgrad"
+        >
+          ✨ Fyll ut
+        </button>
         <button className="tb-btn tb-btn--accent" type="button" title="Rulla ut schema (kommer senare)">
           Rulla ut
         </button>
